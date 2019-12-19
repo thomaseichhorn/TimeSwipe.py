@@ -60,7 +60,18 @@ BOOST_PYTHON_MODULE(timeswipe)
         },
             "This method is all-in-one replacement for SetBridge SetSensorOffsets SetSensorGains SetSensorTransmissions")
         .def("Start", +[](TimeSwipe& self, boost::python::object object) {
-            self.Start(GIL_WRAPPER(object));
+            try {
+                    std::vector<Record> records;
+                    uint64_t errors = 0;
+                    GIL_WRAPPER(object)(records, errors);
+            }
+            catch (const boost::python::error_already_set&)
+            {
+                PyErr_Print();
+                return false;
+            }
+
+            return self.Start(GIL_WRAPPER(object));
         },
             "Start reading Sensor loop. It is mandatory to setup SetBridge SetSensorOffsets SetSensorGains and SetSensorTransmissions before start. Only one instance of TimeSwipe can be running each moment of the time. After each sensor read complete cb called with vector of Record. Buffer is for 1 second data if cb works longer than 1 second, next data can be loosed and next callback called with non-zero errors")
         .def("SetSettings", &TimeSwipe::SetSettings,
