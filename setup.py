@@ -3,7 +3,7 @@ from cmake_setuptools import *
 setuptools.setup(
      name='timeswipe1',
      version='0.4',
-     ext_modules=[CMakeExtension('timeswipe_py')],
+     ext_modules=[CMakeExtension('run')],
      cmdclass={'build_ext': CMakeBuildExt},
      author="Ilya Gavrilov",
      author_email="gilyav@gmail.com",
@@ -11,7 +11,6 @@ setuptools.setup(
      long_description="pydoc timeswipe",
      long_description_content_type="text/markdown",
      url="https://github.com/panda-official/TimeSwipe",
-     packages=setuptools.find_packages(),
      install_requires = ['cmake_setuptools'],
      classifiers=[
          "Programming Language :: Python :: 3",

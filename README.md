@@ -1,31 +1,75 @@
-## Build soure distribution
+## Install from binary wheels
 
+### Raspbian
 ```
-python3 setup.py sdist
-```
-
-## Upload source distribution
-
-```
-python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+sudo apt-get update
+sudo apt install python3-pip
+sudo pip3 install https://github.com/panda-official/TimeSwipe.py/releases/tag/<VERSION>/timeswipe-<VERSION>-cp37-cp37m-linux_armv7l.whl
 ```
 
-## Install on target
+### Arch linux
+```
+sudo pacman -S python-pip
+sudo pip3 install wheel
+sudo pip3 install https://github.com/panda-official/TimeSwipe.py/releases/tag/<VERSION>/timeswipe-<VERSION>-cp37-cp37m-linux_aarch64.whl
 
 ```
+
+## Install from source wheel
+
+### Raspbian
+
+Install timeswipe driver deb packet from https://github.com/panda-official/TimeSwipe/releases
+
+```
+sudo apt-get update
+sudo apt install python3-pip cmake g++ make libboost-python-dev
 sudo pip3 install --upgrade pip
-sudo pip3 install --upgrade cmake_setuptools
 sudo pip3 install -i https://test.pypi.org/simple/ --upgrade timeswipe1
 ```
 
-## Documentation:
+### Arch linux
+
+Install timeswipe driver arch packet from https://github.com/panda-official/TimeSwipe/releases
 
 ```
-pydoc3 timeswipe
+sudo pacman -S python-pip cmake gcc make boost pkgconf
+sudo pip3 install --upgrade pip
+sudo pip3 install wheel
+sudo pip3 install -i https://test.pypi.org/simple/ --upgrade timeswipe1
 ```
 
-## Test:
+## Develop
+
+### Prepare on Raspbian
+
+Install timeswipe deb packet from https://github.com/panda-official/TimeSwipe/releases
 
 ```
-sudo python3 test.py
+sudo apt install git cmake g++ make libboost-python-dev
+sudo pip3 install pylddwrap wheel
 ```
+
+### Prepare on Arch linux
+
+Install timeswipe arch packet from https://github.com/panda-official/TimeSwipe/releases
+
+```
+sudo pacman -S python-pip cmake gcc make boost pkgconf git
+sudo pip3 install pylddwrap wheel
+```
+
+### Build source wheel
+```
+git clone https://github.com/panda-official/TimeSwipe.py
+cd TimeSwipe.py
+python3 setup.py sdist
+```
+
+### Build binary wheel
+```
+git clone https://github.com/panda-official/TimeSwipe.py
+cd TimeSwipe.py
+python3 setup.py bdist_wheel
+```
+
