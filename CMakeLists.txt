@@ -16,12 +16,27 @@ set_target_properties(timeswipe_py PROPERTIES SOVERSION 1)
 find_package(Boost COMPONENTS python3)
 If (Boost_FOUND)
 else ()
-find_package(Boost COMPONENTS python REQUIRED)
+find_package(Boost COMPONENTS python)
 endif ()
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(PYTHON3 REQUIRED python3)
-target_include_directories(timeswipe_py PRIVATE ${PYTHON3_INCLUDE_DIRS} src)
+pkg_search_module(PYTHON3 python3)
 
-target_link_libraries(timeswipe_py timeswipe ${Boost_LIBRARIES} ${PYTHON3_LIBRARIES})
+if (NOT "$ENV{OVERRIDE_INCLUDES}" STREQUAL "")
+set(INCLUDE_LIST "$ENV{OVERRIDE_INCLUDES}")
+string(REPLACE " " ";" INCLUDE_LIST ${INCLUDE_LIST})
+else ()
+set(INCLUDE_LIST ${PYTHON3_INCLUDE_DIRS})
+endif()
+
+if (NOT "$ENV{OVERRIDE_LIBS}" STREQUAL "")
+set(LIB_LIST "$ENV{OVERRIDE_LIBS}")
+string(REPLACE " " ";" LIB_LIST ${LIB_LIST})
+else ()
+set(LIB_LIST timeswipe ${Boost_LIBRARIES})
+endif()
+
+target_include_directories(timeswipe_py PRIVATE src ${INCLUDE_LIST})
+
+target_link_libraries(timeswipe_py ${LIB_LIST} )
 
