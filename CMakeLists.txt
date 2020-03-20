@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
 
-SET(CMAKE_C_COMPILER gcc)
-SET(CMAKE_CXX_COMPILER g++)
-
 SET(CMAKE_C_FLAGS "-lpthread -O3")
 SET(CMAKE_CXX_FLAGS "-fpermissive -lpthread -O3 -std=gnu++17")
 
@@ -19,26 +16,27 @@ set_target_properties(timeswipe_py PROPERTIES SOVERSION 1)
 find_package(Boost COMPONENTS python3)
 If (Boost_FOUND)
 else ()
-find_package(Boost COMPONENTS python REQUIRED)
+find_package(Boost COMPONENTS python)
 endif ()
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(PYTHON3 REQUIRED python3)
-target_include_directories(timeswipe_py PRIVATE ${PYTHON3_INCLUDE_DIRS} src)
+pkg_search_module(PYTHON3 python3)
 
-#target_link_libraries(timeswipe_py timeswipe ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
-target_link_libraries(timeswipe_py timeswipe ${Boost_LIBRARIES})
+if (NOT "$ENV{OVERRIDE_INCLUDES}" STREQUAL "")
+set(INCLUDE_LIST "$ENV{OVERRIDE_INCLUDES}")
+string(REPLACE " " ";" INCLUDE_LIST ${INCLUDE_LIST})
+else ()
+set(INCLUDE_LIST ${PYTHON3_INCLUDE_DIRS})
+endif()
 
-add_custom_target(
-  dep_libs
-  COMMAND
-  	mkdir -p ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe &&
-	rm -f ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe/* &&
-	mv ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe.so* ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe &&
-	python3 ${CMAKE_SOURCE_DIR}/_bundle.py ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe/timeswipe.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/timeswipe libtimeswipe libboost_python
-)
-add_dependencies(dep_libs timeswipe_py)
+if (NOT "$ENV{OVERRIDE_LIBS}" STREQUAL "")
+set(LIB_LIST "$ENV{OVERRIDE_LIBS}")
+string(REPLACE " " ";" LIB_LIST ${LIB_LIST})
+else ()
+set(LIB_LIST timeswipe ${Boost_LIBRARIES})
+endif()
 
-add_custom_target(run ALL
-    DEPENDS dep_libs)
+target_include_directories(timeswipe_py PRIVATE src ${INCLUDE_LIST})
+
+target_link_libraries(timeswipe_py ${LIB_LIST} )
 

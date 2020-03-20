@@ -49,16 +49,20 @@ BOOST_PYTHON_MODULE(timeswipe)
         .def("Init", +[](TimeSwipe& self, boost::python::object bridge, boost::python::list offsets, boost::python::list gains, boost::python::list transmissions) {
             int br = boost::python::extract<int>(bridge);
             int ofs[4];
-            int gns[4];
-            double tr[4];
+            float gns[4];
+            float tr[4];
             for (int i = 0; i < 4; i++) {
                 ofs[i] = boost::python::extract<int>(offsets[i]);
-                gns[i] = boost::python::extract<int>(gains[i]);
-                tr[i] = boost::python::extract<int>(transmissions[i]);
+                gns[i] = boost::python::extract<float>(gains[i]);
+                tr[i] = boost::python::extract<float>(transmissions[i]);
             }
             self.Init(br, ofs, gns, tr);
         },
             "This method is all-in-one replacement for SetBridge SetSensorOffsets SetSensorGains SetSensorTransmissions")
+        .def("SetBurstSize", &TimeSwipe::SetBurstSize,
+                "Setup burst buffer size")
+        .def("SetSampleRate", &TimeSwipe::SetSampleRate,
+                "Setup sample rate. Default value is 48000")
         .def("Start", +[](TimeSwipe& self, boost::python::object object) {
             try {
                     std::vector<Record> records;
