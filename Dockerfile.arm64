@@ -19,4 +19,3 @@ RUN wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.
     tar xf boost_1_67_0.tar.bz2 && cd boost_1_67_0 && ./bootstrap.sh --with-python=/usr/bin/python3.7 && ./b2 install toolset=gcc-arm64 cxxflags=-fPIC cflags=-fPIC --prefix=/usr/ --with-python -j`nproc` && cd .. && rm -rf boost_1_67_0 && \
    rm boost_1_67_0.tar.bz2
 
-COPY build.sh /build.sh
