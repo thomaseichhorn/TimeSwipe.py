@@ -88,3 +88,4 @@ increment version in [setup.py](setup.py)
 git tag v`python3 setup.py --version`
 git push origin v`python3 setup.py --version`
 ```
+
