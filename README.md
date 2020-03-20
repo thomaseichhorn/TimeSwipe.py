@@ -1,3 +1,5 @@
+![](https://github.com/panda-official/TimeSwipe.py/workflows/Workflow/badge.svg) [![PyPI version](https://badge.fury.io/py/timeswipe.svg)](https://badge.fury.io/py/timeswipe)
+
 ## Install from binary wheels
 
 ### Raspbian

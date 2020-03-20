@@ -1,3 +1,2 @@
 include src/*
 include CMakeLists.txt
-include _bundle.py
