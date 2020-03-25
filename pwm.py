@@ -36,6 +36,9 @@ elif options.command == "stop":
             print("stop failed")
     else:
         print("stop succeded")
+    err = tswipe.SetSettings("{\"DACsw\": 1, \"AOUT"+str(int(options.num)+3)+".raw\":2048}")
+    if len(err):
+        print("SetSettings failed: ", err)
 elif options.command == "get":
     print("exec command:", options.command, "num: ", options.num)
     (ret, active, freq, high, low, repeats, duty) = tswipe.GetPWM(int(options.num))

@@ -18,7 +18,6 @@ auto GIL_WRAPPER(F&& f) {
     };
 }
 
-
 BOOST_PYTHON_MODULE(timeswipe)
 {
     using namespace boost::python;
@@ -98,16 +97,18 @@ BOOST_PYTHON_MODULE(timeswipe)
             "Start reading Sensor loop. It is mandatory to setup SetBridge SetSensorOffsets SetSensorGains and SetSensorTransmissions before start. Only one instance of TimeSwipe can be running each moment of the time. After each sensor read complete cb called with SensorsData. Buffer is for 1 second data if cb works longer than 1 second, next data can be loosed and next callback called with non-zero errors")
         .def("SetSettings", +[](TimeSwipe& self, object object) {
                 std::string error;
-                auto ret = self.SetSettings(extract<std::string>(object), error);
-                return make_tuple(ret, error);
+                std::string in = extract<std::string>(object);
+                auto ret = self.SetSettings(in, error);
+                return error;
             }
-            ,"Send SPI SetSettings request and receive the answer. Returns tuple (return_string, error_message)")
+            ,"Send SPI SetSettings request and receive the answer. Returns error_message")
         .def("GetSettings", +[](TimeSwipe& self, object object) {
                 std::string error;
-                auto ret = self.GetSettings(extract<std::string>(object), error);
-                return make_tuple(ret, error);
+                std::string in = extract<std::string>(object);
+                auto ret = self.GetSettings(in, error);
+                return error;
             }
-             ,"Send SPI GetSettings request and receive the answer. Returns tuple (return_string, error_message)")
+             ,"Send SPI GetSettings request and receive the answer. Returns error_message")
         .def("onButton", +[](TimeSwipe& self, object object) {
             self.onButton(GIL_WRAPPER(object));
         },
