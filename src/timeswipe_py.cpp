@@ -5,11 +5,6 @@
 #include "array_indexing_suite.h"
 #include <iostream>
 
-bool operator== (const Record &r1, const Record &r2)
-{
-    return r1.Sensors == r2.Sensors;
-}
-
 template <class T, class M> M get_member_type(M T:: *);
 #define GET_TYPE_OF(mem) decltype(get_member_type(mem))
 
@@ -27,15 +22,22 @@ auto GIL_WRAPPER(F&& f) {
 BOOST_PYTHON_MODULE(timeswipe)
 {
     using namespace boost::python;
-    boost::python::class_<Record>("Record").add_property("sensors", &Record::Sensors 
-            //,boost::python::return_value_policy<boost::python::return_by_value>()
-            );
-    boost::python::class_<std::vector<Record>>("RecordList")
-        .def(boost::python::vector_indexing_suite<std::vector<Record>>());
-    boost::python::class_<GET_TYPE_OF(&Record::Sensors)>("Sensor")
-        .def(array_indexing_suite<GET_TYPE_OF(&Record::Sensors)>()) ;
+    class_<SensorsData>("SensorsData")
+        .def("SensorsSize",&SensorsData::SensorsSize,
+                "Get sensors number")
+        .def("DataSize",&SensorsData::DataSize,
+                "Get data samples number")
+        .def("sensor", +[](SensorsData& self, object obj) {
+            int num = extract<int>(obj);
+	    return self.data()[num];
+        },
+        "Get vector with data of corresponding sensor number [0..SensorsSize-1]")
+    ;
+    class_<std::vector<float>>("SensorData")
+        .def(vector_indexing_suite<std::vector<float>>());
 
-    boost::python::class_<TimeSwipe, boost::noncopyable>("TimeSwipe")
+
+    class_<TimeSwipe, boost::noncopyable>("TimeSwipe")
         .def("SetBridge", &TimeSwipe::SetBridge,
                 "Setup bridge number. It is mandatory to setup the bridge before Start")
         .def("SetSensorOffsets", &TimeSwipe::SetSensorOffsets,
@@ -46,30 +48,46 @@ BOOST_PYTHON_MODULE(timeswipe)
                 "Setup Sensor transmissions. It is mandatory to setup transmissions before Start")
         .def("SetSecondary", &TimeSwipe::SetSecondary,
                 "Setup secondary number")
-        .def("Init", +[](TimeSwipe& self, boost::python::object bridge, boost::python::list offsets, boost::python::list gains, boost::python::list transmissions) {
-            int br = boost::python::extract<int>(bridge);
+        .def("Init", +[](TimeSwipe& self, object bridge, list offsets, list gains, list transmissions) {
+            int br = extract<int>(bridge);
             int ofs[4];
             float gns[4];
             float tr[4];
             for (int i = 0; i < 4; i++) {
-                ofs[i] = boost::python::extract<int>(offsets[i]);
-                gns[i] = boost::python::extract<float>(gains[i]);
-                tr[i] = boost::python::extract<float>(transmissions[i]);
+                ofs[i] = extract<int>(offsets[i]);
+                gns[i] = extract<float>(gains[i]);
+                tr[i] = extract<float>(transmissions[i]);
             }
             self.Init(br, ofs, gns, tr);
         },
             "This method is all-in-one replacement for SetBridge SetSensorOffsets SetSensorGains SetSensorTransmissions")
+        .def("StartPWM", &TimeSwipe::StartPWM,
+                "Start PWM generator")
+        .def("StopPWM", &TimeSwipe::StopPWM,
+                "Stop PWM generator")
+        .def("GetPWM", +[](TimeSwipe& self, object object) {
+                    bool active;
+                    uint32_t frequency;
+                    uint32_t high;
+                    uint32_t low;
+                    uint32_t repeats;
+                    float duty_cycle;
+                    auto num = extract<int>(object);
+                    auto ret = self.GetPWM(num, active, frequency, high, low, repeats, duty_cycle);
+                    return make_tuple(ret, active, frequency, high, low, repeats, duty_cycle);
+                },
+                "Get PWM generator state if it is in a Start state. Returns tuple (result, active, frequency, high, low, repeats, duty_cycle)")
         .def("SetBurstSize", &TimeSwipe::SetBurstSize,
                 "Setup burst buffer size")
         .def("SetSampleRate", &TimeSwipe::SetSampleRate,
                 "Setup sample rate. Default value is 48000")
-        .def("Start", +[](TimeSwipe& self, boost::python::object object) {
+        .def("Start", +[](TimeSwipe& self, object object) {
             try {
-                    std::vector<Record> records;
+                    SensorsData records;
                     uint64_t errors = 0;
                     GIL_WRAPPER(object)(records, errors);
             }
-            catch (const boost::python::error_already_set&)
+            catch (const error_already_set&)
             {
                 PyErr_Print();
                 return false;
@@ -77,16 +95,24 @@ BOOST_PYTHON_MODULE(timeswipe)
 
             return self.Start(GIL_WRAPPER(object));
         },
-            "Start reading Sensor loop. It is mandatory to setup SetBridge SetSensorOffsets SetSensorGains and SetSensorTransmissions before start. Only one instance of TimeSwipe can be running each moment of the time. After each sensor read complete cb called with vector of Record. Buffer is for 1 second data if cb works longer than 1 second, next data can be loosed and next callback called with non-zero errors")
-        .def("SetSettings", &TimeSwipe::SetSettings,
-            "Send SPI SetSettings request and receive the answer")
-        .def("GetSettings", &TimeSwipe::GetSettings,
-             "Send SPI GetSettings request and receive the answer")
-        .def("onButton", +[](TimeSwipe& self, boost::python::object object) {
+            "Start reading Sensor loop. It is mandatory to setup SetBridge SetSensorOffsets SetSensorGains and SetSensorTransmissions before start. Only one instance of TimeSwipe can be running each moment of the time. After each sensor read complete cb called with SensorsData. Buffer is for 1 second data if cb works longer than 1 second, next data can be loosed and next callback called with non-zero errors")
+        .def("SetSettings", +[](TimeSwipe& self, object object) {
+                std::string error;
+                auto ret = self.SetSettings(extract<std::string>(object), error);
+                return make_tuple(ret, error);
+            }
+            ,"Send SPI SetSettings request and receive the answer. Returns tuple (return_string, error_message)")
+        .def("GetSettings", +[](TimeSwipe& self, object object) {
+                std::string error;
+                auto ret = self.GetSettings(extract<std::string>(object), error);
+                return make_tuple(ret, error);
+            }
+             ,"Send SPI GetSettings request and receive the answer. Returns tuple (return_string, error_message)")
+        .def("onButton", +[](TimeSwipe& self, object object) {
             self.onButton(GIL_WRAPPER(object));
         },
             "Register callback for button pressed/released. onButton must be called before called, otherwise register fails")
-        .def("onError", +[](TimeSwipe& self, boost::python::object object) {
+        .def("onError", +[](TimeSwipe& self, object object) {
             self.onError(GIL_WRAPPER(object));
         },
             "onError must be called before Start called, otherwise register fails")

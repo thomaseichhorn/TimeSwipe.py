@@ -44,15 +44,18 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 count = 0
-def process(records, errors):
+def process(data, errors):
+    #print("process")
     global count
     if errors:
         print_err("errors: ", errors)
-    for record in records:
-        #print('\t'.join([str(int(x)) for x in record.sensors]))
+    for i in range(data.DataSize()):
         count = count + 1
+        #print('\t'.join([str(data.sensor(j)[i]) for j in range(data.SensorsSize())]))
 
-tswipe.Start(process)
-time.sleep(10)
-print("count: ", count)
+if tswipe.Start(process):
+    time.sleep(10)
+    print("count: ", count)
+else:
+    print("start failed")
 
