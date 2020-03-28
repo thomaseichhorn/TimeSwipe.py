@@ -2,7 +2,7 @@ import setuptools
 from cmake_setuptools import *
 setuptools.setup(
      name='timeswipe',
-     version='0.0.9',
+     version='0.0.10',
      ext_modules=[CMakeExtension('timeswipe_py')],
      cmdclass={'build_ext': CMakeBuildExt},
      author="Ilya Gavrilov",
