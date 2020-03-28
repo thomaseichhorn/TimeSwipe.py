@@ -11,7 +11,6 @@ setuptools.setup(
      long_description="pydoc timeswipe",
      long_description_content_type="text/markdown",
      url="https://github.com/panda-official/TimeSwipe",
-     install_requires = ['cmake_setuptools'],
      classifiers=[
          "Programming Language :: Python :: 3",
          "License :: OSI Approved :: MIT License",
