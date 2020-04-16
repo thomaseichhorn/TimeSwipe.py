@@ -46,7 +46,9 @@ sudo pip3 install --upgrade pip
 sudo pip3 install wheel
 sudo pip3 install --no-binary :all: timeswipe
 ```
-
+## Usage
+Run Python script with Timeswipe dependency as root (sudo) because permission to access GPIO is needed.
+ 
 ## Develop
 
 ### Prepare on Raspbian
