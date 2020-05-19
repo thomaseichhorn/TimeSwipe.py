@@ -37,29 +37,40 @@ BOOST_PYTHON_MODULE(timeswipe)
 
 
     class_<TimeSwipe, boost::noncopyable>("TimeSwipe")
-        .def("SetBridge", &TimeSwipe::SetBridge,
-                "Setup bridge number. It is mandatory to setup the bridge before Start")
+        .def("SetMode", +[](TimeSwipe& self, object object) {
+                std::string mode = extract<std::string>(object);
+                    TimeSwipe::Mode m;
+                    if (mode == "PRIMARY") {
+                        m = TimeSwipe::Mode::Primary;
+                    } else if (mode == "NORM") {
+                        m = TimeSwipe::Mode::Norm;
+                    } else if (mode == "DIGITAL") {
+                        m = TimeSwipe::Mode::Digital;
+                    } else {
+                        return false;
+                    }
+                    self.SetMode(m);
+                    return true;
+                },
+               "Setup hardware mode")
+        .def("GetMode", +[](TimeSwipe& self, object object) {
+                    auto m = self.GetMode();
+                    if (m == TimeSwipe::Mode::Primary) {
+                        return "PRIMARY";
+                    } else if (m == TimeSwipe::Mode::Norm) {
+                        return "NORM";
+                    } else if (m == TimeSwipe::Mode::Digital) {
+                        return "DIGITAL";
+                    }
+                    return "";
+                },
+               "Get current hardware mode")
         .def("SetSensorOffsets", &TimeSwipe::SetSensorOffsets,
                "Setup Sensor offsets. It is mandatory to setup offsets before Start" )
         .def("SetSensorGains", &TimeSwipe::SetSensorGains,
                 "Setup Sensor gains. It is mandatory to setup gains before Start")
         .def("SetSensorTransmissions", &TimeSwipe::SetSensorTransmissions,
                 "Setup Sensor transmissions. It is mandatory to setup transmissions before Start")
-        .def("SetSecondary", &TimeSwipe::SetSecondary,
-                "Setup secondary number")
-        .def("Init", +[](TimeSwipe& self, object bridge, list offsets, list gains, list transmissions) {
-            int br = extract<int>(bridge);
-            int ofs[4];
-            float gns[4];
-            float tr[4];
-            for (int i = 0; i < 4; i++) {
-                ofs[i] = extract<int>(offsets[i]);
-                gns[i] = extract<float>(gains[i]);
-                tr[i] = extract<float>(transmissions[i]);
-            }
-            self.Init(br, ofs, gns, tr);
-        },
-            "This method is all-in-one replacement for SetBridge SetSensorOffsets SetSensorGains SetSensorTransmissions")
         .def("StartPWM", &TimeSwipe::StartPWM,
                 "Start PWM generator")
         .def("StopPWM", &TimeSwipe::StopPWM,
@@ -109,8 +120,40 @@ BOOST_PYTHON_MODULE(timeswipe)
                 return error;
             }
              ,"Send SPI GetSettings request and receive the answer. Returns error_message")
-        .def("onButton", +[](TimeSwipe& self, object object) {
-            self.onButton(GIL_WRAPPER(object));
+        .def("onEvent", +[](TimeSwipe& self, object object) {
+                self.onEvent([object=GIL_WRAPPER(object)] (TimeSwipeEvent&& ev) {
+                    static auto* arr_ptr = new dict;
+                    auto& arr = *arr_ptr;
+                    arr.clear();
+                    if (ev.is<TimeSwipeEvent::Button>()) {
+                        const auto& button = ev.get<TimeSwipeEvent::Button>();
+                        arr["type"] = "Button";
+                        arr["pressed"] = button.pressed();
+                        arr["count"] = button.count();
+                    } else if (ev.is<TimeSwipeEvent::Gain>()) {
+                        arr["type"] = "Gain";
+                        arr["value"] = ev.get<TimeSwipeEvent::Gain>().value();
+                    } else if (ev.is<TimeSwipeEvent::SetSecondary>()) {
+                        arr["type"] = "SetSecondary";
+                        arr["value"] = ev.get<TimeSwipeEvent::SetSecondary>().value();
+                    } else if (ev.is<TimeSwipeEvent::Bridge>()) {
+                        arr["type"] = "Bridge";
+                        arr["value"] = ev.get<TimeSwipeEvent::Bridge>().value();
+                    } else if (ev.is<TimeSwipeEvent::Record>()) {
+                        arr["type"] = "Record";
+                        arr["value"] = ev.get<TimeSwipeEvent::Record>().value();
+                    } else if (ev.is<TimeSwipeEvent::Offset>()) {
+                        arr["type"] = "Offset";
+                        arr["value"] = ev.get<TimeSwipeEvent::Offset>().value();
+                    } else if (ev.is<TimeSwipeEvent::Mode>()) {
+                        arr["type"] = "Mode";
+                        arr["value"] = ev.get<TimeSwipeEvent::Mode>().value();
+                    } else {
+                        arr["type"] = "UNKNOWN";
+                    }
+
+                    GIL_WRAPPER(object)(arr);
+                });
         },
             "Register callback for button pressed/released. onButton must be called before called, otherwise register fails")
         .def("onError", +[](TimeSwipe& self, object object) {
@@ -119,6 +162,8 @@ BOOST_PYTHON_MODULE(timeswipe)
             "onError must be called before Start called, otherwise register fails")
         .def("Stop", &TimeSwipe::Stop,
             "Stop reading Sensor loop")
+        .def("TraceSPI", &TimeSwipe::TraceSPI,
+            "Trace SPI")
     ;
 }
 
