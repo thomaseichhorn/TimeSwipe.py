@@ -15,6 +15,7 @@ parser = optparse.OptionParser()
 parser.add_option('--config', dest="config", help="config file name", default="config.json")
 parser.add_option('--input', dest="input", help="input name; default is first one from config", default="1")
 parser.add_option('--output', dest="output", help="output filename to save data", default=None)
+parser.add_option('--time', dest="time", help="runtime in seconds", default="10")
 
 options, args = parser.parse_args()
 
@@ -23,6 +24,7 @@ tswipe = timeswipe.TimeSwipe()
 json_file = open(options.config)
 data = json.load(json_file)
 item = data[options.input]
+runtime = int ( options.time )
 output = None
 if options.output:
     sys.stdout = open(options.output, "w")
@@ -61,7 +63,7 @@ def process(data, errors):
         pass
 
 if tswipe.Start(process):
-    time.sleep(10)
+    time.sleep(runtime)
     print("count: ", count)
 else:
     print("start failed")
